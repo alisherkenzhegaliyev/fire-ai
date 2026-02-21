@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { StatsPanel } from './StatsPanel'
 import { AssignmentChain } from './AssignmentChain'
 import { TicketsTable } from './TicketsTable'
+import { TicketModal } from './TicketModal'
 import { ManagersTable } from './ManagersTable'
 import { ChartsPanel } from '../charts/ChartsPanel'
 import { GeoMapPanel } from '../map/GeoMapPanel'
@@ -14,6 +15,7 @@ import type { Ticket } from '../../types/ticket'
 
 export function DashboardScreen() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [modalTicket, setModalTicket] = useState<Ticket | null>(null)
 
   const ticketsQuery = useTickets()
   const managersQuery = useManagers()
@@ -52,34 +54,41 @@ export function DashboardScreen() {
   const analytics = analyticsQuery.data!
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-screen-2xl mx-auto px-4 py-5 space-y-5">
-        {/* Stats */}
-        <StatsPanel data={analytics} />
+    <>
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-screen-2xl mx-auto px-4 py-5 space-y-5">
+          {/* Stats */}
+          <StatsPanel data={analytics} />
 
-        {/* Charts */}
-        <ChartsPanel data={analytics} />
+          {/* Charts */}
+          <ChartsPanel data={analytics} />
 
-        {/* AI Summary — full width */}
-        <AssignmentChain ticket={selectedTicket} />
+          {/* AI Summary — full width */}
+          <AssignmentChain ticket={selectedTicket} />
 
-        {/* Managers + Tickets side by side */}
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-5">
-          <div className="xl:col-span-2">
-            <ManagersTable managers={managers} />
+          {/* Managers + Tickets side by side */}
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-5">
+            <div className="xl:col-span-2">
+              <ManagersTable managers={managers} />
+            </div>
+            <div className="xl:col-span-3">
+              <TicketsTable
+                tickets={tickets}
+                selectedId={selectedTicket?.id ?? null}
+                onSelect={setSelectedTicket}
+                onViewDetails={setModalTicket}
+              />
+            </div>
           </div>
-          <div className="xl:col-span-3">
-            <TicketsTable
-              tickets={tickets}
-              selectedId={selectedTicket?.id ?? null}
-              onSelect={setSelectedTicket}
-            />
-          </div>
+
+          {/* Map at the bottom */}
+          <GeoMapPanel tickets={tickets} />
         </div>
-
-        {/* Map at the bottom */}
-        <GeoMapPanel tickets={tickets} />
       </div>
-    </div>
+
+      {modalTicket && (
+        <TicketModal ticket={modalTicket} onClose={() => setModalTicket(null)} />
+      )}
+    </>
   )
 }

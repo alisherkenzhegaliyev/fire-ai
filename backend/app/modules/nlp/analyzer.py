@@ -1,30 +1,20 @@
 """
-NLP Analyzer — uses local Gemma-3-4b-it via HuggingFace transformers pipeline.
+NLP Analyzer — uses local Gemma via Ollama (OpenAI-compatible API).
 """
 import json
 import logging
 import re
 import time
-import torch
-from transformers import pipeline
-from app.core.config import settings
+from openai import OpenAI
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [NLP] %(message)s")
 log = logging.getLogger(__name__)
 
 # ── Model Configuration ──────────────────────────────────────────────────────
-MODEL_ID = "google/gemma-3-4b-it"
+MODEL_ID = "gemma3:4b"
+OLLAMA_BASE_URL = "http://localhost:11434/v1"
 
-log.info("Loading model %s …", MODEL_ID)
-_t0 = time.perf_counter()
-pipe = pipeline(
-    "text-generation",
-    model=MODEL_ID,
-    model_kwargs={"dtype": torch.bfloat16},
-    device_map="auto",
-    token=settings.hf_token or None,
-)
-log.info("Model loaded in %.1fs", time.perf_counter() - _t0)
+client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
 
 # ── Russian → English mappings ────────────────────────────────────────────────
 REQUEST_TYPE_MAP: dict[str, str] = {
@@ -60,8 +50,8 @@ Analyze the given customer request and return a JSON object with the following f
 - sentiment: One of ["Положительная", "Нейтральная", "Негативная"]
 - priority: Integer from 1 (lowest) to 10 (highest urgency)
 - language: One of ["KZ", "ENG", "RU"] — if unclear, default to "RU"
-- summary: Must contain 1–2 concise sentences summarizing the request and must be shorter than the original customer description.
-- next_actions: A short string with recommended next actions for the manager (1–3 steps)
+- summary: 1–2 concise sentences in RUSSIAN summarizing the request, shorter than the original.
+- next_actions: A short string in RUSSIAN with recommended next actions for the manager (1–3 steps).
 
 Rules for priority:
 - Fraudulent Activity → 9-10
@@ -70,7 +60,7 @@ Rules for priority:
 - Consultations → 1-4
 - Spam → 1
 
-Return ONLY valid JSON."""
+Return ONLY valid JSON. All text values must be written in Russian."""
 
 
 def _extract_json(text: str) -> str:
@@ -83,25 +73,24 @@ def _extract_json(text: str) -> str:
 
 def analyze_ticket(description: str, index: int = 0, total: int = 1) -> dict:
     """
-    Send a ticket description to local Gemma and return structured NLP analysis.
+    Send a ticket description to Ollama Gemma and return structured NLP analysis.
     """
     t_start = time.perf_counter()
     log.info("[%d/%d] Analyzing ticket (len=%d chars) …", index, total, len(description))
 
     try:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": description},
-        ]
-
-        outputs = pipe(
-            messages,
-            max_new_tokens=512,
-            do_sample=False,
+        response = client.chat.completions.create(
+            model=MODEL_ID,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": description},
+            ],
+            max_tokens=200,
+            temperature=0,
         )
 
         t_infer = time.perf_counter() - t_start
-        content = outputs[0]["generated_text"][-1]["content"] or ""
+        content = response.choices[0].message.content or ""
         log.info("[%d/%d] Inference done in %.1fs, raw output length=%d", index, total, t_infer, len(content))
 
         result = json.loads(_extract_json(content))
@@ -129,6 +118,6 @@ def _fallback() -> dict:
         "sentiment": "Neutral",
         "priority_score": 5,
         "language": "RU",
-        "summary": "Could not analyze — please review manually.",
-        "next_actions": "Manual review required.",
+        "summary": "Не удалось проанализировать — требуется ручная проверка.",
+        "next_actions": "Передать на ручную обработку.",
     }

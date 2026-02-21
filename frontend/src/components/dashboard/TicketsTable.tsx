@@ -8,9 +8,10 @@ interface TicketsTableProps {
   tickets: Ticket[]
   selectedId: string | null
   onSelect: (ticket: Ticket) => void
+  onViewDetails: (ticket: Ticket) => void
 }
 
-export function TicketsTable({ tickets, selectedId, onSelect }: TicketsTableProps) {
+export function TicketsTable({ tickets, selectedId, onSelect, onViewDetails }: TicketsTableProps) {
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState('')
 
@@ -49,6 +50,7 @@ export function TicketsTable({ tickets, selectedId, onSelect }: TicketsTableProp
               <th className="px-4 py-2.5 text-left font-medium">City</th>
               <th className="px-4 py-2.5 text-left font-medium">Office</th>
               <th className="px-4 py-2.5 text-left font-medium">Manager</th>
+              <th className="px-2 py-2.5" />
             </tr>
           </thead>
           <tbody>
@@ -81,6 +83,18 @@ export function TicketsTable({ tickets, selectedId, onSelect }: TicketsTableProp
                 </td>
                 <td className="px-4 py-2.5 text-gray-300 truncate max-w-[140px]">
                   {ticket.assignedManagerName ?? <span className="text-gray-600">—</span>}
+                </td>
+                <td className="px-2 py-2.5">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onViewDetails(ticket) }}
+                    className="rounded p-1 text-gray-500 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors"
+                    title="View original ticket"
+                  >
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <ellipse cx="8" cy="8" rx="7" ry="4.5" />
+                      <circle cx="8" cy="8" r="2" />
+                    </svg>
+                  </button>
                 </td>
               </tr>
             ))}
