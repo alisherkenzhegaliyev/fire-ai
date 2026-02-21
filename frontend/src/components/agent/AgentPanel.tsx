@@ -12,7 +12,7 @@ export function AgentPanel() {
   }
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l border-gray-700/60 bg-gray-900 shadow-2xl animate-slide-in-right">
+    <div className="fixed top-14 bottom-0 right-0 z-40 flex w-full max-w-md flex-col border-l border-gray-700/60 bg-gray-900 shadow-2xl animate-slide-in-right">
       {/* Panel Header */}
       <div className="flex items-center justify-between border-b border-gray-700/50 px-4 py-3">
         <div className="flex items-center gap-2">

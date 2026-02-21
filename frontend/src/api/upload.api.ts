@@ -9,7 +9,7 @@ export async function uploadCSV(
   formData.append('file', file)
 
   const response = await client.post<UploadResponse>('/api/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    // Do NOT set Content-Type manually — Axios sets it with the correct multipart boundary
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
         const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total)

@@ -3,7 +3,6 @@ import { StatsPanel } from './StatsPanel'
 import { AssignmentChain } from './AssignmentChain'
 import { TicketsTable } from './TicketsTable'
 import { ManagersTable } from './ManagersTable'
-import { AnalyzeButton } from './AnalyzeButton'
 import { ChartsPanel } from '../charts/ChartsPanel'
 import { GeoMapPanel } from '../map/GeoMapPanel'
 import { Spinner } from '../shared/Spinner'
@@ -55,27 +54,20 @@ export function DashboardScreen() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-screen-2xl mx-auto px-4 py-5 space-y-5">
-        {/* Stats + Analyze button */}
-        <div className="flex items-start gap-4 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <StatsPanel data={analytics} />
-          </div>
-          <div className="shrink-0 self-center">
-            <AnalyzeButton />
-          </div>
-        </div>
-
-        {/* Assignment Chain */}
-        <AssignmentChain ticket={selectedTicket} />
+        {/* Stats */}
+        <StatsPanel data={analytics} />
 
         {/* Charts */}
         <ChartsPanel data={analytics} />
 
-        {/* Map */}
-        <GeoMapPanel tickets={tickets} />
+        {/* AI Summary — full width */}
+        <AssignmentChain ticket={selectedTicket} />
 
-        {/* Tables */}
+        {/* Managers + Tickets side by side */}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-5">
+          <div className="xl:col-span-2">
+            <ManagersTable managers={managers} />
+          </div>
           <div className="xl:col-span-3">
             <TicketsTable
               tickets={tickets}
@@ -83,10 +75,10 @@ export function DashboardScreen() {
               onSelect={setSelectedTicket}
             />
           </div>
-          <div className="xl:col-span-2">
-            <ManagersTable managers={managers} />
-          </div>
         </div>
+
+        {/* Map at the bottom */}
+        <GeoMapPanel tickets={tickets} />
       </div>
     </div>
   )

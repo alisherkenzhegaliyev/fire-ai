@@ -1,9 +1,12 @@
-# Application configuration using pydantic-settings
-# Responsibilities:
-#   - Load environment variables from .env file
-#   - Settings class fields:
-#       - DATABASE_URL: str
-#       - OPENAI_API_KEY: str
-#       - GEOCODING_API_KEY: str (optional, for external geocoding service)
-#       - FRONTEND_ORIGIN: str (for CORS)
-#   - Expose a singleton `settings` instance imported by other modules
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    openrouter_api_key: str = ""
+    hf_token: str = "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"
+    frontend_origin: str = "http://localhost:5173"
+
+
+settings = Settings()

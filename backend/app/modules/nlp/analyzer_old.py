@@ -1,30 +1,16 @@
 """
-NLP Analyzer — uses local Gemma-3-4b-it via HuggingFace transformers pipeline.
+NLP Analyzer — uses OpenRouter (openai/gpt-oss-120b:free) to classify and summarize tickets.
 """
 import json
-import logging
 import re
-import time
-import torch
-from transformers import pipeline
+from openai import OpenAI
 from app.core.config import settings
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [NLP] %(message)s")
-log = logging.getLogger(__name__)
-
-# ── Model Configuration ──────────────────────────────────────────────────────
-MODEL_ID = "google/gemma-3-4b-it"
-
-log.info("Loading model %s …", MODEL_ID)
-_t0 = time.perf_counter()
-pipe = pipeline(
-    "text-generation",
-    model=MODEL_ID,
-    model_kwargs={"dtype": torch.bfloat16},
-    device_map="auto",
-    token=settings.hf_token or None,
+_client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=settings.openrouter_api_key,
 )
-log.info("Model loaded in %.1fs", time.perf_counter() - _t0)
+MODEL = "openai/gpt-oss-120b:free"
 
 # ── Russian → English mappings ────────────────────────────────────────────────
 REQUEST_TYPE_MAP: dict[str, str] = {
@@ -35,6 +21,7 @@ REQUEST_TYPE_MAP: dict[str, str] = {
     "Неработоспособность приложения": "AppMalfunction",
     "Мошеннические действия": "FraudulentActivity",
     "Спам": "Spam",
+    # passthrough if model already returns English
     "Complaint": "Complaint",
     "DataChange": "DataChange",
     "Consultation": "Consultation",
@@ -53,7 +40,8 @@ SENTIMENT_MAP: dict[str, str] = {
     "Negative": "Negative",
 }
 
-SYSTEM_PROMPT = """You are an AI assistant for a bank's customer support routing system.
+SYSTEM_PROMPT = """
+You are an AI assistant for a bank's customer support routing system.
 Analyze the given customer request and return a JSON object with the following fields:
 
 - request_type: One of ["Жалоба", "Смена данных", "Консультация", "Претензия", "Неработоспособность приложения", "Мошеннические действия", "Спам"]
@@ -64,50 +52,42 @@ Analyze the given customer request and return a JSON object with the following f
 - next_actions: A short string with recommended next actions for the manager (1–3 steps)
 
 Rules for priority:
-- Fraudulent Activity → 9-10
+- Fraudulent Activity → always 9-10
 - Application Malfunction with urgent payment → 8-10
 - Complaints with strong negative sentiment → 6-8
 - Consultations → 1-4
 - Spam → 1
 
-Return ONLY valid JSON."""
+Return ONLY valid JSON. No markdown, no explanation.
+"""
 
 
 def _extract_json(text: str) -> str:
     text = text.strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$", "", text)
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
     m = re.search(r"\{.*\}", text, flags=re.DOTALL)
     return m.group(0).strip() if m else text
 
 
-def analyze_ticket(description: str, index: int = 0, total: int = 1) -> dict:
+def analyze_ticket(description: str) -> dict:
     """
-    Send a ticket description to local Gemma and return structured NLP analysis.
+    Send a ticket description to OpenRouter and return structured NLP analysis.
+    Returns English-mapped values compatible with the frontend types.
     """
-    t_start = time.perf_counter()
-    log.info("[%d/%d] Analyzing ticket (len=%d chars) …", index, total, len(description))
-
     try:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": description},
-        ]
-
-        outputs = pipe(
-            messages,
-            max_new_tokens=512,
-            do_sample=False,
+        response = _client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": description},
+            ],
+            temperature=0,
+            extra_body={"reasoning": {"enabled": True}},
         )
-
-        t_infer = time.perf_counter() - t_start
-        content = outputs[0]["generated_text"][-1]["content"] or ""
-        log.info("[%d/%d] Inference done in %.1fs, raw output length=%d", index, total, t_infer, len(content))
-
+        content = response.choices[0].message.content or ""
         result = json.loads(_extract_json(content))
-        log.info("[%d/%d] Parsed: type=%s sentiment=%s priority=%s",
-                 index, total,
-                 result.get("request_type"), result.get("sentiment"), result.get("priority"))
 
         return {
             "request_type": REQUEST_TYPE_MAP.get(result.get("request_type", ""), "Consultation"),
@@ -118,8 +98,9 @@ def analyze_ticket(description: str, index: int = 0, total: int = 1) -> dict:
             "next_actions": result.get("next_actions", ""),
         }
 
-    except Exception as e:
-        log.error("[%d/%d] Failed after %.1fs: %s", index, total, time.perf_counter() - t_start, e)
+    except json.JSONDecodeError:
+        return _fallback()
+    except Exception:
         return _fallback()
 
 
