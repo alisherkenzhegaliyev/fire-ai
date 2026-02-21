@@ -34,6 +34,7 @@ export interface Ticket {
   priorityScore: number
   language: Language
   summary: string
+  inferTimeMs: number
   // Assignment
   assignedManagerId: string | null
   assignedManagerName: string | null

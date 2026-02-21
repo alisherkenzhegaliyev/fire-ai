@@ -1,17 +1,21 @@
 import { StatCard } from './StatCard'
 import type { AnalyticsData } from '../../types/analytics'
+import type { NlpTiming } from '../../store/appStore'
 
 interface StatsPanelProps {
   data: AnalyticsData
+  nlpTiming?: NlpTiming | null
 }
 
-export function StatsPanel({ data }: StatsPanelProps) {
+export function StatsPanel({ data, nlpTiming }: StatsPanelProps) {
   const assignRate = data.totalTickets > 0
     ? Math.round((data.assignedCount / data.totalTickets) * 100)
     : 0
 
+  const cols = nlpTiming ? 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-6' : 'grid-cols-2 lg:grid-cols-4'
+
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className={`grid gap-3 ${cols}`}>
       <StatCard
         label="Total Tickets"
         value={data.totalTickets}
@@ -56,6 +60,32 @@ export function StatsPanel({ data }: StatsPanelProps) {
           </svg>
         }
       />
+      {nlpTiming && (
+        <>
+          <StatCard
+            label="AI Total Time"
+            value={`${nlpTiming.totalTime}s`}
+            subtext="inference wall time"
+            accent="purple"
+            icon={
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Avg per Ticket"
+            value={`${nlpTiming.avgTime}s`}
+            subtext="mean inference time"
+            accent="purple"
+            icon={
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
+            }
+          />
+        </>
+      )}
     </div>
   )
 }

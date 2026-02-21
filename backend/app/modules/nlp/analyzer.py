@@ -1,20 +1,23 @@
 """
 NLP Analyzer — uses local Gemma via Ollama (OpenAI-compatible API).
 """
+import asyncio
 import json
 import logging
 import re
 import time
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [NLP] %(message)s")
 log = logging.getLogger(__name__)
 
 # ── Model Configuration ──────────────────────────────────────────────────────
-MODEL_ID = "gemma3:4b"
+MODEL_ID = "gemma3:1b"
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
+CONCURRENCY = 3  # max parallel requests to Ollama
 
-client = OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
+client = AsyncOpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
+_sem = asyncio.Semaphore(CONCURRENCY)
 
 # ── Russian → English mappings ────────────────────────────────────────────────
 REQUEST_TYPE_MAP: dict[str, str] = {
@@ -71,7 +74,7 @@ def _extract_json(text: str) -> str:
     return m.group(0).strip() if m else text
 
 
-def analyze_ticket(description: str, index: int = 0, total: int = 1) -> dict:
+async def analyze_ticket(description: str, index: int = 0, total: int = 1) -> dict:
     """
     Send a ticket description to Ollama Gemma and return structured NLP analysis.
     """
@@ -79,15 +82,18 @@ def analyze_ticket(description: str, index: int = 0, total: int = 1) -> dict:
     log.info("[%d/%d] Analyzing ticket (len=%d chars) …", index, total, len(description))
 
     try:
-        response = client.chat.completions.create(
-            model=MODEL_ID,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": description},
-            ],
-            max_tokens=200,
-            temperature=0,
-        )
+        async with _sem:
+            t_infer_start = time.perf_counter()
+            response = await client.chat.completions.create(
+                model=MODEL_ID,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": description},
+                ],
+                max_tokens=200,
+                temperature=0,
+            )
+            infer_time_ms = round((time.perf_counter() - t_infer_start) * 1000)
 
         t_infer = time.perf_counter() - t_start
         content = response.choices[0].message.content or ""
@@ -105,6 +111,7 @@ def analyze_ticket(description: str, index: int = 0, total: int = 1) -> dict:
             "language": result.get("language", "RU"),
             "summary": result.get("summary", ""),
             "next_actions": result.get("next_actions", ""),
+            "infer_time_ms": infer_time_ms,
         }
 
     except Exception as e:
@@ -120,4 +127,5 @@ def _fallback() -> dict:
         "language": "RU",
         "summary": "Не удалось проанализировать — требуется ручная проверка.",
         "next_actions": "Передать на ручную обработку.",
+        "infer_time_ms": 0,
     }

@@ -11,11 +11,13 @@ import { ErrorBanner } from '../shared/ErrorBanner'
 import { useTickets } from '../../hooks/useTickets'
 import { useManagers } from '../../hooks/useManagers'
 import { useAnalytics } from '../../hooks/useAnalytics'
+import { useAppStore } from '../../store/appStore'
 import type { Ticket } from '../../types/ticket'
 
 export function DashboardScreen() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [modalTicket, setModalTicket] = useState<Ticket | null>(null)
+  const nlpTiming = useAppStore((s) => s.nlpTiming)
 
   const ticketsQuery = useTickets()
   const managersQuery = useManagers()
@@ -58,7 +60,7 @@ export function DashboardScreen() {
       <div className="h-full overflow-y-auto">
         <div className="max-w-screen-2xl mx-auto px-4 py-5 space-y-5">
           {/* Stats */}
-          <StatsPanel data={analytics} />
+          <StatsPanel data={analytics} nlpTiming={nlpTiming} />
 
           {/* Charts */}
           <ChartsPanel data={analytics} />

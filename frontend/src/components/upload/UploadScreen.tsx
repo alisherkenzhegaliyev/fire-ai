@@ -17,6 +17,7 @@ export function UploadScreen() {
     setSessionId,
     setPhase,
     resetUpload,
+    setNlpTiming,
   } = useAppStore()
 
   const [fileName, setFileName] = useState('')
@@ -32,6 +33,7 @@ export function UploadScreen() {
       try {
         const result = await uploadCSV(file, setUploadProgress)
         setSessionId(result.sessionId)
+        setNlpTiming({ totalTime: result.nlpTotalTime, avgTime: result.nlpAvgTime })
         setSuccessData({ ticketCount: result.ticketCount, managerCount: result.managerCount })
         setUploadStatus('success')
 
@@ -44,7 +46,7 @@ export function UploadScreen() {
         setUploadStatus('error')
       }
     },
-    [setUploadStatus, setUploadProgress, setUploadError, setSessionId, setPhase]
+    [setUploadStatus, setUploadProgress, setUploadError, setSessionId, setPhase, setNlpTiming]
   )
 
   return (
@@ -65,7 +67,7 @@ export function UploadScreen() {
         <div className="rounded-2xl border border-gray-700/50 bg-gray-800/40 p-8">
           {uploadStatus === 'idle' || uploadStatus === 'error' ? (
             <div className="space-y-4">
-              <DropZone onFile={handleFile} disabled={uploadStatus === 'uploading'} />
+              <DropZone onFile={handleFile} disabled={false} />
               {uploadStatus === 'error' && uploadError && (
                 <ErrorBanner
                   message={uploadError}

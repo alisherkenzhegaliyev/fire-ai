@@ -4,6 +4,8 @@ export interface UploadResponse {
   managerCount: number
   status: 'success' | 'partial' | 'failed'
   message?: string
+  nlpTotalTime: number
+  nlpAvgTime: number
 }
 
 export interface UploadProgress {

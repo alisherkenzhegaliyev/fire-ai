@@ -44,6 +44,9 @@ export function TicketModal({ ticket, onClose }: TicketModalProps) {
         <div className="flex flex-wrap gap-x-5 gap-y-1 px-5 py-3 border-b border-gray-700/30 text-xs text-gray-400">
           <span>Priority <span className="font-mono text-amber-300">{ticket.priorityScore}/10</span></span>
           <span>Lang <span className="text-gray-200">{ticket.language}</span></span>
+          {ticket.inferTimeMs > 0 && (
+            <span>AI inference <span className="font-mono text-purple-300">{(ticket.inferTimeMs / 1000).toFixed(2)}s</span></span>
+          )}
           {ticket.city && <span>City <span className="text-gray-200">{ticket.city}</span></span>}
           {ticket.assignedManagerName && (
             <span>Manager <span className="text-gray-200">{ticket.assignedManagerName}</span></span>

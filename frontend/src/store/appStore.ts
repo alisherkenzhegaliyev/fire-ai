@@ -3,6 +3,11 @@ import { create } from 'zustand'
 export type AppPhase = 'upload' | 'dashboard'
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error'
 
+export interface NlpTiming {
+  totalTime: number
+  avgTime: number
+}
+
 interface AppState {
   phase: AppPhase
   sessionId: string | null
@@ -10,6 +15,7 @@ interface AppState {
   uploadProgress: number
   uploadError: string | null
   agentPanelOpen: boolean
+  nlpTiming: NlpTiming | null
 
   setPhase: (phase: AppPhase) => void
   setSessionId: (id: string) => void
@@ -19,6 +25,7 @@ interface AppState {
   openAgentPanel: () => void
   closeAgentPanel: () => void
   resetUpload: () => void
+  setNlpTiming: (timing: NlpTiming) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -28,6 +35,7 @@ export const useAppStore = create<AppState>((set) => ({
   uploadProgress: 0,
   uploadError: null,
   agentPanelOpen: false,
+  nlpTiming: null,
 
   setPhase: (phase) => set({ phase }),
   setSessionId: (sessionId) => set({ sessionId }),
@@ -38,4 +46,5 @@ export const useAppStore = create<AppState>((set) => ({
   closeAgentPanel: () => set({ agentPanelOpen: false }),
   resetUpload: () =>
     set({ uploadStatus: 'idle', uploadProgress: 0, uploadError: null }),
+  setNlpTiming: (nlpTiming) => set({ nlpTiming }),
 }))
