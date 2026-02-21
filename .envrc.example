@@ -1,2 +1,0 @@
-export DATABASE_URL=postgresql://postgres:postgres@db/
-export DATABASE_NAME=example_database
