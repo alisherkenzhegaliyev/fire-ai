@@ -14,7 +14,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
 from app.core.config import settings
-from app.mcp_server import get_ticket_stats, get_tickets, filter_tickets, get_priority_breakdown
+from app.mcp_server import get_ticket_stats, get_tickets, filter_tickets, get_priority_breakdown, get_manager_workloads
 
 SYSTEM_PROMPT = """\
 You are a data analyst AI assistant for a bank's customer support routing dashboard.
@@ -76,22 +76,29 @@ def _make_tools() -> list:
     def priority() -> str:
         return json.dumps(get_priority_breakdown(), default=str)
 
+    def manager_workloads() -> str:
+        return json.dumps(get_manager_workloads(), default=str)
+
     return [
         StructuredTool.from_function(
             stats,
             name="get_stats",
             description=(
-                "Get aggregated statistics over all tickets: total count, avg priority, "
-                "breakdowns by segment, request_type, sentiment, language, city, country."
+                "Get aggregated statistics over all tickets: total count, assigned_count, "
+                "unassigned_count, avg priority, breakdowns by client_segment, request_type, "
+                "sentiment, language, city, country, region, assigned_manager_name, "
+                "assigned_manager_level, assigned_office."
             ),
         ),
         StructuredTool.from_function(
             tickets,
             name="get_tickets",
             description=(
-                "Get a list of tickets from the database. "
-                "Optional 'limit' (default 20). Returns segment, city, request_type, "
-                "sentiment, priority, language, summary per ticket."
+                "Get a list of tickets from the database. Optional 'limit' (default 20). "
+                "Returns: customer_guid, gender, date_of_birth, client_segment, country, "
+                "region, city, street, building, request_type, sentiment, priority, language, "
+                "summary, next_actions, assigned_manager_name, assigned_manager_level, "
+                "assigned_office, assigned_office_address."
             ),
         ),
         StructuredTool.from_function(
@@ -99,7 +106,8 @@ def _make_tools() -> list:
             name="filter_tickets",
             description=(
                 "Filter tickets by a field+value pair. "
-                "Valid fields: city, country, segment, request_type, sentiment, language, gender, region. "
+                "Valid fields: city, country, region, client_segment, request_type, sentiment, "
+                "language, gender, assigned_manager_name, assigned_manager_level, assigned_office. "
                 "Example: field='sentiment', value='Негативный'."
             ),
         ),
@@ -107,6 +115,14 @@ def _make_tools() -> list:
             priority,
             name="get_priority_breakdown",
             description="Get count of tickets at each priority level 1–10.",
+        ),
+        StructuredTool.from_function(
+            manager_workloads,
+            name="get_manager_workloads",
+            description=(
+                "Get each assigned manager's ticket count, their level, and their office. "
+                "Useful for workload analysis and manager performance questions."
+            ),
         ),
     ]
 
