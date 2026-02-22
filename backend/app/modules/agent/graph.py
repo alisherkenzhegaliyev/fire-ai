@@ -14,7 +14,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
 from app.core.config import settings
-from app.mcp_server import get_ticket_stats, get_tickets, filter_tickets, get_priority_breakdown, get_manager_workloads
+from app.mcp_server import get_ticket_stats, get_tickets, filter_tickets, get_priority_breakdown, get_manager_workloads, get_cross_breakdown, get_age_stats
 
 SYSTEM_PROMPT = """\
 You are a data analyst AI assistant for a bank's customer support routing dashboard.
@@ -67,6 +67,9 @@ def _make_tools() -> list:
     def stats() -> str:
         return json.dumps(get_ticket_stats(), default=str)
 
+    def cross_breakdown(group_by: str, secondary_group: str) -> str:
+        return json.dumps(get_cross_breakdown(group_by, secondary_group), default=str)
+
     def tickets(limit: int = 20) -> str:
         return json.dumps(get_tickets(limit), default=str)
 
@@ -79,36 +82,57 @@ def _make_tools() -> list:
     def manager_workloads() -> str:
         return json.dumps(get_manager_workloads(), default=str)
 
+    def age_stats(filter_field: str | None = None, filter_value: str | None = None) -> str:
+        return json.dumps(get_age_stats(filter_field, filter_value), default=str)
+
     return [
         StructuredTool.from_function(
             stats,
             name="get_stats",
             description=(
-                "Get aggregated statistics over all tickets: total count, assigned_count, "
-                "unassigned_count, avg priority, breakdowns by client_segment, request_type, "
-                "sentiment, language, city, country, region, assigned_manager_name, "
-                "assigned_manager_level, assigned_office."
+                "Get aggregated statistics: total, assigned/unassigned counts, avg priority, "
+                "breakdowns by segment, request_type, sentiment, language, assigned_level, assigned_office. "
+                "For cross-tabulations (e.g. sentiment BY segment) use get_cross_breakdown instead."
+            ),
+        ),
+        StructuredTool.from_function(
+            cross_breakdown,
+            name="get_cross_breakdown",
+            description=(
+                "Get ticket counts cross-tabulated by two fields. Use for questions like "
+                "'sentiment breakdown by segment', 'request types by language', 'offices by segment'. "
+                "Args: group_by and secondary_group — both from: "
+                "client_segment, request_type, sentiment, language, assigned_office, "
+                "assigned_manager_level, gender, country, region, city."
             ),
         ),
         StructuredTool.from_function(
             tickets,
             name="get_tickets",
             description=(
-                "Get a list of tickets from the database. Optional 'limit' (default 20). "
-                "Returns: customer_guid, gender, date_of_birth, client_segment, country, "
-                "region, city, street, building, request_type, sentiment, priority, language, "
-                "summary, next_actions, assigned_manager_name, assigned_manager_level, "
-                "assigned_office, assigned_office_address."
+                "Get a sample list of tickets (max 50). Optional 'limit' (default 20). "
+                "Returns: customer_guid, gender, client_segment, country, region, city, "
+                "request_type, sentiment, priority, language, summary, "
+                "assigned_manager_name, assigned_manager_level, assigned_office."
             ),
         ),
         StructuredTool.from_function(
             filtered,
             name="filter_tickets",
             description=(
-                "Filter tickets by a field+value pair. "
+                "Filter tickets by a field+value pair (max 50 rows). "
                 "Valid fields: city, country, region, client_segment, request_type, sentiment, "
                 "language, gender, assigned_manager_name, assigned_manager_level, assigned_office. "
-                "Example: field='sentiment', value='Негативный'."
+                "For aggregated counts prefer get_cross_breakdown."
+            ),
+        ),
+        StructuredTool.from_function(
+            age_stats,
+            name="get_age_stats",
+            description=(
+                "Compute average, min, and max client age from date_of_birth. "
+                "Optional filter: filter_field + filter_value (e.g. filter_field='assigned_office', filter_value='Астана'). "
+                "Use for any question about client age, demographics, or age by office/segment."
             ),
         ),
         StructuredTool.from_function(

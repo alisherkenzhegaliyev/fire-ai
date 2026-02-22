@@ -25,7 +25,7 @@ from app.store import save_session
 log = logging.getLogger(__name__)
 router = APIRouter()
 
-MAX_NLP_TICKETS = 50
+MAX_NLP_TICKETS = 200
 
 
 # ---------------------------------------------------------------------------

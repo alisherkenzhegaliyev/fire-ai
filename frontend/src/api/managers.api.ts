@@ -7,3 +7,8 @@ export async function fetchManagers(sessionId: string): Promise<Manager[]> {
   });
   return response.data;
 }
+
+export async function fetchManagersFromDb(): Promise<Manager[]> {
+  const response = await client.get<Manager[]>("/api/managers/db");
+  return response.data;
+}

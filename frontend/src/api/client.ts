@@ -21,8 +21,8 @@ function keysToCamel(obj: unknown): unknown {
 
 // ── Axios instance ────────────────────────────────────────────────────────────
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '',
-  timeout: 300000, // 5 min — NLP per ticket can be slow with 30+ entries
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? ''
+   // 5 min — NLP per ticket can be slow with 30+ entries
 })
 
 // Attach session_id to every request that doesn't already have it
