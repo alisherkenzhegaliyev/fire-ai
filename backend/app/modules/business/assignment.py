@@ -35,6 +35,10 @@ def pick_manager(
 
     Returns (chosen_manager_dict | None, resolved_office_id).
     """
+    # Spam tickets are never assigned to a manager
+    if (ticket.get("request_type") or "").strip() == "Spam":
+        return None, office_id
+
     candidates = filter_eligible_managers(ticket, office_id, managers)
 
     if not candidates:

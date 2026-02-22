@@ -12,7 +12,7 @@ export function StatsPanel({ data, nlpTiming }: StatsPanelProps) {
     ? Math.round((data.assignedCount / data.totalTickets) * 100)
     : 0
 
-  const cols = nlpTiming ? 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-6' : 'grid-cols-2 lg:grid-cols-4'
+  const cols = nlpTiming ? 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-5' : 'grid-cols-2 lg:grid-cols-4'
 
   return (
     <div className={`grid gap-3 ${cols}`}>
@@ -70,17 +70,6 @@ export function StatsPanel({ data, nlpTiming }: StatsPanelProps) {
             icon={
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-          />
-          <StatCard
-            label="Avg per Ticket"
-            value={`${nlpTiming.avgTime}s`}
-            subtext="mean inference time"
-            accent="purple"
-            icon={
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
               </svg>
             }
           />
