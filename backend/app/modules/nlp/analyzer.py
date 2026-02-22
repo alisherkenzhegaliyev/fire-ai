@@ -8,6 +8,8 @@ import re
 import time
 from openai import AsyncOpenAI
 
+from app.modules.nlp.priority import score_priority
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [NLP] %(message)s")
 log = logging.getLogger(__name__)
 
@@ -52,17 +54,9 @@ Analyze the given customer request and return a JSON object with the following f
 
 - request_type: One of ["Жалоба", "Смена данных", "Консультация", "Претензия", "Неработоспособность приложения", "Мошеннические действия", "Спам"]
 - sentiment: One of ["Положительная", "Нейтральная", "Негативная"]
-- priority: Integer from 1 (lowest) to 10 (highest urgency)
 - language: One of ["KZ", "ENG", "RU"] — if unclear, default to "RU"
 - summary: 1–2 concise sentences in RUSSIAN summarizing the request, shorter than the original.
 - next_actions: A short string in RUSSIAN with recommended next actions for the manager (1–3 steps).
-
-Rules for priority:
-- Fraudulent Activity → always 9-10
-- Application Malfunction with urgent payment → 8-10
-- Complaints with strong negative sentiment → 6-8
-- Consultations → 1-4
-- Spam → 1
 
 Return ONLY valid JSON. All text values must be written in Russian."""
 
@@ -78,9 +72,11 @@ def _extract_json(text: str) -> str:
     return m.group(0).strip() if m else text
 
 
-async def analyze_ticket(description: str, index: int = 0, total: int = 1) -> dict:
+async def analyze_ticket(description: str, segment: str = "Mass", index: int = 0, total: int = 1) -> dict:
     """
     Send a ticket description to Ollama Gemma and return structured NLP analysis.
+    Priority is computed deterministically from request_type + sentiment + segment
+    using score_priority() instead of relying on the LLM.
     """
     t_start = time.perf_counter()
     log.info("[%d/%d] Analyzing ticket (len=%d chars) …", index, total, len(description))
@@ -105,14 +101,17 @@ async def analyze_ticket(description: str, index: int = 0, total: int = 1) -> di
         log.info("[%d/%d] Inference done in %.1fs, raw output length=%d", index, total, t_infer, len(content))
 
         result = json.loads(_extract_json(content))
-        log.info("[%d/%d] Parsed: type=%s sentiment=%s priority=%s",
-                 index, total,
-                 result.get("request_type"), result.get("sentiment"), result.get("priority"))
+        raw_request_type = result.get("request_type", "Консультация")
+        raw_sentiment = result.get("sentiment", "Нейтральная")
+
+        priority = score_priority(raw_request_type, raw_sentiment, segment)
+        log.info("[%d/%d] Parsed: type=%s sentiment=%s priority=%d (scored)",
+                 index, total, raw_request_type, raw_sentiment, priority)
 
         return {
-            "request_type": REQUEST_TYPE_MAP.get(result.get("request_type", ""), "Consultation"),
-            "sentiment": SENTIMENT_MAP.get(result.get("sentiment", ""), "Neutral"),
-            "priority_score": int(result.get("priority", 5)),
+            "request_type": REQUEST_TYPE_MAP.get(raw_request_type, "Consultation"),
+            "sentiment": SENTIMENT_MAP.get(raw_sentiment, "Neutral"),
+            "priority_score": priority,
             "language": result.get("language", "RU"),
             "summary": result.get("summary", ""),
             "next_actions": result.get("next_actions", ""),
@@ -121,7 +120,7 @@ async def analyze_ticket(description: str, index: int = 0, total: int = 1) -> di
 
     except Exception as e:
         log.error("[%d/%d] Failed after %.1fs: %s", index, total, time.perf_counter() - t_start, e)
-        return _fallback()
+        return _fallback(segment)
 
 
 def update_settings(model_id: str, concurrency: int) -> None:
@@ -133,11 +132,11 @@ def update_settings(model_id: str, concurrency: int) -> None:
     log.info("NLP settings updated: model=%s concurrency=%d", MODEL_ID, CONCURRENCY)
 
 
-def _fallback() -> dict:
+def _fallback(segment: str = "Mass") -> dict:
     return {
         "request_type": "Consultation",
         "sentiment": "Neutral",
-        "priority_score": 5,
+        "priority_score": score_priority("Консультация", "Нейтральная", segment),
         "language": "RU",
         "summary": "Не удалось проанализировать — требуется ручная проверка.",
         "next_actions": "Передать на ручную обработку.",

@@ -200,7 +200,7 @@ async def upload_csv(file: UploadFile = File(...)):
     t0 = time.perf_counter()
 
     nlp_results = await asyncio.gather(
-        *[analyze_ticket(t["description"], index=i, total=total)
+        *[analyze_ticket(t["description"], t.get("segment", "Mass"), index=i, total=total)
           for i, t in enumerate(tickets, start=1)]
     )
 
