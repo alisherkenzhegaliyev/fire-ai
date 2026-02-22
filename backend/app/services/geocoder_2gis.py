@@ -8,7 +8,7 @@ import httpx
 
 log = logging.getLogger(__name__)
 
-_API_KEY = "8a9b6d85-4c16-4f43-9c23-829c5ef6ec38"
+_API_KEY = "e560747c-3197-4618-8643-e01aa778b523"
 _BASE_URL = "https://catalog.api.2gis.com/3.0/items/geocode"
 
 

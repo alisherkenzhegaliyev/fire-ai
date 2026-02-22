@@ -32,7 +32,7 @@ def get_analytics(session_id: str = Query(...)):
     managers: list[dict] = session["managers"]
 
     total = len(tickets)
-    assigned = sum(1 for t in tickets if t.get("assigned_manager_id"))
+    assigned = sum(1 for t in tickets if t.get("assigned_manager_name"))
     priorities = [t.get("priority_score", 5) for t in tickets]
     avg_priority = round(sum(priorities) / len(priorities), 1) if priorities else 0.0
 
