@@ -23,23 +23,29 @@ export function TicketMarker({ ticket, onClick }: TicketMarkerProps) {
       pathOptions={{
         color: SEGMENT_COLORS[ticket.segment] ?? '#6366f1',
         fillColor: SEGMENT_COLORS[ticket.segment] ?? '#6366f1',
-        fillOpacity: 0.7,
+        fillOpacity: 0.8,
         weight: 1.5,
       }}
       eventHandlers={{ click: () => onClick(ticket) }}
     >
       <Popup>
-        <div className="space-y-1 text-xs min-w-[180px]">
-          <div className="flex gap-1 flex-wrap mb-1">
+        <div className="space-y-1 text-xs min-w-[190px]">
+          <div className="flex gap-1 flex-wrap mb-1.5">
             <Badge value={ticket.segment} />
             <Badge value={ticket.requestType} />
           </div>
-          <p className="text-gray-700 font-medium">{ticket.city}, {ticket.country}</p>
-          <p className="text-gray-500">Priority: {ticket.priorityScore}/10</p>
+          <p className="font-semibold text-gray-800">{ticket.city}, {ticket.country}</p>
+          <p className="text-gray-600">
+            Priority: <span className="font-medium text-gray-800">{ticket.priorityScore}/10</span>
+          </p>
           {ticket.assignedManagerName && (
-            <p className="text-gray-600">Manager: {ticket.assignedManagerName}</p>
+            <p className="text-gray-600">
+              Manager: <span className="font-medium text-gray-800">{ticket.assignedManagerName}</span>
+            </p>
           )}
-          <p className="text-gray-400 line-clamp-2 mt-1">{ticket.summary}</p>
+          {ticket.summary && (
+            <p className="text-gray-600 leading-snug mt-1 line-clamp-3">{ticket.summary}</p>
+          )}
         </div>
       </Popup>
     </CircleMarker>

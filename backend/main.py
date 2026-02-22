@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.routes import upload, tickets, managers, analytics, agent
+from app.api.routes import upload, tickets, managers, analytics, agent, db, settings as nlp_settings
+from app.mcp_server import mcp
 
 app = FastAPI(title="FIRE — Freedom Intelligent Routing Engine", version="0.1.0")
 
@@ -19,8 +20,15 @@ app.include_router(tickets.router, prefix="/api")
 app.include_router(managers.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(agent.router, prefix="/api")
+app.include_router(db.router, prefix="/api")
+app.include_router(nlp_settings.router, prefix="/api")
 
 
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+# Mount FastMCP SSE endpoint for external MCP clients (e.g. Claude Desktop)
+mcp_app = mcp.sse_app()
+app.mount("/mcp", mcp_app)

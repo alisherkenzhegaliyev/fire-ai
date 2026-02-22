@@ -8,10 +8,22 @@ import {
 } from 'recharts'
 import type { DistributionBucket } from '../../types/analytics'
 
+// Maps both English (session) and Russian (DB) sentiment labels to colors
 const SENTIMENT_COLORS: Record<string, string> = {
   Positive: '#10b981',
   Neutral: '#f59e0b',
   Negative: '#f43f5e',
+  // Russian values stored in DB
+  'Позитивный': '#10b981',
+  'Нейтральный': '#f59e0b',
+  'Негативный': '#f43f5e',
+}
+
+const TOOLTIP_STYLE = {
+  background: '#1e293b',
+  border: '1px solid #334155',
+  borderRadius: '8px',
+  fontSize: 12,
 }
 
 interface SentimentChartProps {
@@ -42,13 +54,9 @@ export function SentimentChart({ data }: SentimentChartProps) {
             ))}
           </Pie>
           <Tooltip
-            contentStyle={{
-              background: '#1f2937',
-              border: '1px solid #374151',
-              borderRadius: '8px',
-              color: '#f9fafb',
-              fontSize: 12,
-            }}
+            contentStyle={TOOLTIP_STYLE}
+            itemStyle={{ color: '#f1f5f9' }}
+            labelStyle={{ color: '#94a3b8', marginBottom: 2 }}
             formatter={(value: number, name: string) => [
               `${value} tickets`,
               name,
@@ -58,7 +66,7 @@ export function SentimentChart({ data }: SentimentChartProps) {
             iconType="circle"
             iconSize={8}
             formatter={(value) => (
-              <span style={{ color: '#9ca3af', fontSize: 11 }}>{value}</span>
+              <span style={{ color: '#cbd5e1', fontSize: 11 }}>{value}</span>
             )}
           />
         </PieChart>

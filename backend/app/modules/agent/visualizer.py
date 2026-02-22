@@ -10,10 +10,10 @@ from openai import OpenAI
 from app.core.config import settings
 
 _client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=settings.openrouter_api_key,
+    base_url="https://router.huggingface.co/v1",
+    api_key=settings.hf_token,
 )
-MODEL = "openai/gpt-oss-120b:free"
+MODEL = "openai/gpt-oss-120b"
 
 
 # ── Data summarisation helpers ────────────────────────────────────────────────
@@ -111,7 +111,6 @@ def handle_query(question: str, tickets: list[dict], managers: list[dict]) -> di
                 {"role": "user", "content": f"Dataset summary:\n{context}\n\nUser question: {question}"},
             ],
             temperature=0,
-            extra_body={"reasoning": {"enabled": True}},
         )
         content = response.choices[0].message.content or ""
         result = json.loads(_extract_json(content))

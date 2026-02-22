@@ -10,6 +10,10 @@ const OFFICES = [
   { name: 'Almaty Office', address: 'Almaty, Kazakhstan', lat: 43.238, lng: 76.889 },
 ]
 
+// Geographic center of Kazakhstan — used as fallback when no ticket coords available
+const KZ_CENTER: [number, number] = [48.0, 68.0]
+const KZ_ZOOM = 5
+
 interface GeoMapPanelProps {
   tickets: Ticket[]
   onTicketSelect?: (ticket: Ticket) => void
@@ -21,25 +25,19 @@ export function GeoMapPanel({ tickets, onTicketSelect }: GeoMapPanelProps) {
     [tickets]
   )
 
-  const center = useMemo<[number, number]>(() => {
-    if (mappableTickets.length === 0) return [47.0, 65.0]
-    const avgLat = mappableTickets.reduce((s, t) => s + t.latitude!, 0) / mappableTickets.length
-    const avgLng = mappableTickets.reduce((s, t) => s + t.longitude!, 0) / mappableTickets.length
-    return [avgLat, avgLng]
-  }, [mappableTickets])
-
   return (
     <div className="rounded-xl border border-gray-700/50 bg-gray-800/40 overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-700/50 flex items-center justify-between">
         <p className="text-sm font-semibold text-white">Geographic Distribution</p>
         <p className="text-xs text-gray-400">{mappableTickets.length} tickets mapped</p>
       </div>
-      <div className="h-80">
+      <div className="h-[520px]">
         <MapContainer
-          center={center}
-          zoom={5}
+          center={KZ_CENTER}
+          zoom={KZ_ZOOM}
+          minZoom={4}
           style={{ height: '100%', width: '100%', background: '#111827' }}
-          scrollWheelZoom={false}
+          scrollWheelZoom={true}
         >
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"

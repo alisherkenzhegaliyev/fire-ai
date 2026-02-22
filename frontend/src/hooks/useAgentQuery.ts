@@ -22,6 +22,7 @@ export function useAgentQuery() {
         role: 'assistant',
         text: data.answer,
         chartData: data.chartData,
+        htmlArtifact: data.htmlArtifact,
         timestamp: Date.now(),
       })
     },

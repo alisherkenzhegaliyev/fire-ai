@@ -1,4 +1,5 @@
-OLLAMA_NUM_PARALLEL ?= 3
+OLLAMA_NUM_PARALLEL ?= 4
+OLLAMA_FLASH_ATTENTION ?= 1
 
 .PHONY: ollama backend frontend dev
 

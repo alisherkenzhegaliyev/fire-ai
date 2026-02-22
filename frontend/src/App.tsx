@@ -21,7 +21,7 @@ function AppContent() {
     <PageShell>
       {phase === 'upload' && <UploadScreen />}
       {phase === 'dashboard' && <DashboardScreen />}
-      {phase === 'dashboard' && agentPanelOpen && <AgentPanel />}
+      {agentPanelOpen && <AgentPanel />}
     </PageShell>
   )
 }

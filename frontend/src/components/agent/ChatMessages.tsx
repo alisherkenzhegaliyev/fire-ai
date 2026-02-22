@@ -1,10 +1,20 @@
 import { useEffect, useRef } from 'react'
 import { ChatMessage } from './ChatMessage'
-import { Spinner } from '../shared/Spinner'
+import { ThinkingProcess } from './ThinkingProcess'
 import { useAgentStore } from '../../store/agentStore'
 
-export function ChatMessages() {
-  const { messages, isLoading } = useAgentStore()
+interface ChatMessagesProps {
+  onSubmit: (question: string) => void
+}
+
+const SUGGESTIONS = [
+  'Show request type distribution by city',
+  'Which managers have the highest workload?',
+  'Show sentiment breakdown by segment',
+]
+
+export function ChatMessages({ onSubmit }: ChatMessagesProps) {
+  const { messages, isLoading, thinkingSteps } = useAgentStore()
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -26,17 +36,15 @@ export function ChatMessages() {
           </p>
         </div>
         <div className="mt-2 space-y-1.5 w-full">
-          {[
-            'Show request type distribution by city',
-            'Which managers have the highest workload?',
-            'Show sentiment breakdown by segment',
-          ].map((suggestion) => (
-            <div
+          {SUGGESTIONS.map((suggestion) => (
+            <button
               key={suggestion}
-              className="rounded-lg bg-gray-700/50 border border-gray-600/40 px-3 py-2 text-xs text-gray-400 text-left"
+              onClick={() => onSubmit(suggestion)}
+              disabled={isLoading}
+              className="w-full rounded-lg bg-gray-700/50 border border-gray-600/40 px-3 py-2 text-xs text-gray-400 text-left hover:bg-gray-700 hover:text-gray-200 hover:border-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               "{suggestion}"
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -49,15 +57,7 @@ export function ChatMessages() {
         <ChatMessage key={msg.id} message={msg} />
       ))}
       {isLoading && (
-        <div className="flex gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-700 text-xs font-bold text-gray-300">
-            AI
-          </div>
-          <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm bg-gray-700/80 px-4 py-3">
-            <Spinner size="sm" />
-            <span className="text-xs text-gray-400">Thinking…</span>
-          </div>
-        </div>
+        <ThinkingProcess steps={thinkingSteps} isLoading={isLoading} />
       )}
       <div ref={bottomRef} />
     </div>

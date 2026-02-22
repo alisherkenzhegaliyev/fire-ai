@@ -6,6 +6,13 @@ pydantic-settings==2.7.0
 openai>=1.30.0
 pandas==2.2.3
 python-dotenv==1.0.1
-torch>=2.2.0
-transformers>=4.40.0
-accelerate>=0.29.0
+# PostgreSQL
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+httpx>=0.27.0
+lingua-language-detector>=2.0.0
+# MCP + LangGraph agent
+fastmcp>=2.0.0
+langchain>=0.3.0
+langgraph>=0.2.0
+langchain-openai>=0.2.0

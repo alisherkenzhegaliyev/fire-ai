@@ -12,9 +12,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [NLP] %(message)s")
 log = logging.getLogger(__name__)
 
 # ── Model Configuration ──────────────────────────────────────────────────────
-MODEL_ID = "gemma3:1b"
+MODEL_ID = "gemma3:4b"
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
-CONCURRENCY = 3  # max parallel requests to Ollama
+CONCURRENCY = 6   # keep Ollama's queue full (match OLLAMA_NUM_PARALLEL + buffer)
+NUM_CTX = 1024    # context window per request — system prompt+ticket+reply fits ~700 tokens
 
 client = AsyncOpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
 _sem = asyncio.Semaphore(CONCURRENCY)
@@ -57,7 +58,7 @@ Analyze the given customer request and return a JSON object with the following f
 - next_actions: A short string in RUSSIAN with recommended next actions for the manager (1–3 steps).
 
 Rules for priority:
-- Fraudulent Activity → 9-10
+- Fraudulent Activity → always 9-10
 - Application Malfunction with urgent payment → 8-10
 - Complaints with strong negative sentiment → 6-8
 - Consultations → 1-4
@@ -68,8 +69,11 @@ Return ONLY valid JSON. All text values must be written in Russian."""
 
 def _extract_json(text: str) -> str:
     text = text.strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$", "", text)
+    if text.startswith("```"):
+        parts = text.split("```")
+        text = parts[1]
+        if text.startswith("json"):
+            text = text[4:]
     m = re.search(r"\{.*\}", text, flags=re.DOTALL)
     return m.group(0).strip() if m else text
 
@@ -92,6 +96,7 @@ async def analyze_ticket(description: str, index: int = 0, total: int = 1) -> di
                 ],
                 max_tokens=200,
                 temperature=0,
+                extra_body={"options": {"num_ctx": NUM_CTX}},
             )
             infer_time_ms = round((time.perf_counter() - t_infer_start) * 1000)
 
@@ -117,6 +122,15 @@ async def analyze_ticket(description: str, index: int = 0, total: int = 1) -> di
     except Exception as e:
         log.error("[%d/%d] Failed after %.1fs: %s", index, total, time.perf_counter() - t_start, e)
         return _fallback()
+
+
+def update_settings(model_id: str, concurrency: int) -> None:
+    """Hot-swap the Ollama model and client concurrency at runtime."""
+    global MODEL_ID, CONCURRENCY, _sem
+    MODEL_ID = model_id
+    CONCURRENCY = concurrency
+    _sem = asyncio.Semaphore(CONCURRENCY)
+    log.info("NLP settings updated: model=%s concurrency=%d", MODEL_ID, CONCURRENCY)
 
 
 def _fallback() -> dict:

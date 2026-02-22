@@ -1,24 +1,19 @@
 import { useState, type KeyboardEvent } from 'react'
 import { useAgentStore } from '../../store/agentStore'
-import { useAgentQuery } from '../../hooks/useAgentQuery'
 
-export function ChatInput() {
+interface ChatInputProps {
+  onSubmit: (question: string) => void
+}
+
+export function ChatInput({ onSubmit }: ChatInputProps) {
   const [value, setValue] = useState('')
-  const { isLoading, addMessage } = useAgentStore()
-  const mutation = useAgentQuery()
+  const { isLoading } = useAgentStore()
 
   const submit = () => {
     const question = value.trim()
     if (!question || isLoading) return
-
-    addMessage({
-      id: crypto.randomUUID(),
-      role: 'user',
-      text: question,
-      timestamp: Date.now(),
-    })
     setValue('')
-    mutation.mutate(question)
+    onSubmit(question)
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {

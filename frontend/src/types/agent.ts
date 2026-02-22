@@ -17,4 +17,5 @@ export interface AgentQueryRequest {
 export interface AgentQueryResponse {
   answer: string
   chartData?: AgentChartPayload
+  htmlArtifact?: string
 }

@@ -6,8 +6,19 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from 'recharts'
 import type { DistributionBucket } from '../../types/analytics'
+
+// Cycle through a palette for offices/cities
+const PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#a855f7', '#14b8a6', '#f43f5e']
+
+const TOOLTIP_STYLE = {
+  background: '#1e293b',
+  border: '1px solid #334155',
+  borderRadius: '8px',
+  fontSize: 12,
+}
 
 interface OfficeChartProps {
   data: DistributionBucket[]
@@ -23,35 +34,35 @@ export function OfficeChart({ data }: OfficeChartProps) {
           layout="vertical"
           margin={{ top: 0, right: 20, left: 8, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
           <XAxis
             type="number"
-            tick={{ fill: '#9ca3af', fontSize: 10 }}
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             type="category"
             dataKey="label"
-            tick={{ fill: '#9ca3af', fontSize: 10 }}
+            tick={{ fill: '#cbd5e1', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             width={80}
           />
           <Tooltip
-            contentStyle={{
-              background: '#1f2937',
-              border: '1px solid #374151',
-              borderRadius: '8px',
-              color: '#f9fafb',
-              fontSize: 12,
-            }}
+            contentStyle={TOOLTIP_STYLE}
+            itemStyle={{ color: '#f1f5f9' }}
+            labelStyle={{ color: '#94a3b8', marginBottom: 2 }}
             formatter={(value: number, _name: string, props) => [
               `${value} (${props.payload.percentage}%)`,
               'Tickets',
             ]}
           />
-          <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+            {data.map((entry, i) => (
+              <Cell key={entry.label} fill={PALETTE[i % PALETTE.length]} />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
