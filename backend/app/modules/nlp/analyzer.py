@@ -52,7 +52,7 @@ SENTIMENT_MAP: dict[str, str] = {
 SYSTEM_PROMPT = """You are an AI assistant for a bank's customer support routing system.
 Analyze the given customer request and return a JSON object with the following fields:
 
-- request_type: One of ["Жалоба", "Смена данных", "Консультация", "Претензия", "Неработоспособность приложения", "Мошеннические действия", "Спам"]
+- request_type: One of ["Жалоба", "Смена данных", "Консультация", "Претензия", "Неработоспособность приложения", "Мошеннические действия", "Спам"]. Use "Спам" for irrelevant, nonsensical, or non-banking messages that are not real customer support requests.
 - sentiment: One of ["Положительная", "Нейтральная", "Негативная"]
 - language: One of ["KZ", "ENG", "RU"] — if unclear, default to "RU"
 - summary: 1–2 concise sentences in RUSSIAN summarizing the request, shorter than the original.
