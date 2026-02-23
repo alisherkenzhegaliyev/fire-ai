@@ -80,6 +80,9 @@
 Each ticket description is passed to a locally-running **Gemma 3** model via Ollama's OpenAI-compatible API. The LLM produces four fields; priority is intentionally excluded from the prompt and computed separately.
 
 **LLM outputs**
+<img width="1365" height="782" alt="Screenshot 2026-02-22 at 12 47 29" src="https://github.com/user-attachments/assets/e077bccd-9
+<img width="544" height="414" alt="Screenshot 2026-02-22 at 12 48 52" src="https://github.com/user-attachments/assets/89e32246-9da4-4785-b9e1-aea11b9b9983" />
+895-4e19-856d-525d6f813c43" />
 
 | Field | Domain |
 |---|---|
@@ -140,6 +143,9 @@ priority = clamp(
 Built on **lingua-language-detector**, which uses quadrigram/trigram statistics and substantially outperforms `langdetect` on short Cyrillic texts.
 
 **Supported languages:** `RU` · `KZ` · `ENG`
+<img width="530" height="296" alt="Screenshot 2026-02-23 at 11 47 22" src="https://github.com/user-attachments/assets/358b3fb4-766f-40c1-b750-066cc0a55903" />
+<img width="582" height="343" alt="Screenshot 2026-02-22 at 12 48 05" src="https://github.com/user-attachments/assets/e45ecb14-69ec-4865-a0a4-bee5703ba9af" />
+
 
 Detection runs in two passes:
 
@@ -161,6 +167,7 @@ Each ticket's structured address (`city`, `street`, `building`) is resolved to `
 - **Locale** — `ru_KZ`
 
 Coordinates feed directly into the haversine routing stage.
+<img width="1413" height="593" alt="Screenshot 2026-02-23 at 12 17 55" src="https://github.com/user-attachments/assets/91a940f9-c56e-474c-bada-b98f9f00fb19" />
 
 ---
 
@@ -205,6 +212,8 @@ chosen["workload"] += 1
 ---
 
 ## AI Analytics Assistant
+<img width="1358" height="878" alt="Screenshot 2026-02-22 at 11 54 06" src="https://github.com/user-attachments/assets/a84e5915-2eb1-4148-98f4-0c45f731230b" />
+<img width="1363" height="878" alt="Screenshot 2026-02-22 at 12 50 41" src="https://github.com/user-attachments/assets/466fdd3e-2198-4b5d-b382-27079e97cb71" />
 
 A streaming ReAct agent that answers natural-language questions about the live dataset, backed by **openai/gpt-oss-120b** routed through the HuggingFace Inference Router.
 
