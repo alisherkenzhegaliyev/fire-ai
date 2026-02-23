@@ -143,8 +143,10 @@ priority = clamp(
 Built on **lingua-language-detector**, which uses quadrigram/trigram statistics and substantially outperforms `langdetect` on short Cyrillic texts.
 
 **Supported languages:** `RU` · `KZ` · `ENG`
+
+
 <img width="530" height="296" alt="Screenshot 2026-02-23 at 11 47 22" src="https://github.com/user-attachments/assets/358b3fb4-766f-40c1-b750-066cc0a55903" />
-<img width="582" height="343" alt="Screenshot 2026-02-22 at 12 48 05" src="https://github.com/user-attachments/assets/e45ecb14-69ec-4865-a0a4-bee5703ba9af" />
+<img width="530" height="296" alt="Screenshot 2026-02-22 at 12 48 05" src="https://github.com/user-attachments/assets/e45ecb14-69ec-4865-a0a4-bee5703ba9af" />
 
 
 Detection runs in two passes:
